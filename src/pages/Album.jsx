@@ -4,26 +4,30 @@ import Header from '../components/Header';
 import Loading from '../components/Loading';
 import MusicCard from '../components/MusicCard';
 import getMusics from '../services/musicsAPI';
+import { addSong } from '../services/favoriteSongsAPI';
 
 class Album extends Component {
   state = {
     loadingAlbum: false,
     albumData: [{ artistName: '' }],
+    loadingFavorite: false,
   };
 
   componentDidMount() {
-    this.fetchMusic();
+    this.fetchAlbums();
   }
 
-  handleChange({ target }) {
-    const { name } = target;
-    const value = target.type === 'checkbox' ? target.checked : target.value;
-    this.setState({
-      [name]: value,
-    });
-  }
+  addFavorite = async (songInfo) => {
+    this.setState(
+      { loadingFavorite: true },
+      async () => {
+        await addSong(songInfo);
+        this.setState({ loadingFavorite: false });
+      },
+    );
+  };
 
-  fetchMusic = async () => {
+  fetchAlbums = async () => {
     const { match } = this.props;
     const { params } = match;
     const { id } = params;
@@ -31,16 +35,32 @@ class Album extends Component {
       { loadingAlbum: true },
       async () => {
         const albumData = await getMusics(id);
+        const slicedAlbumData = albumData.slice(1);
+        const trackIdArr = slicedAlbumData.map(() => false);
         this.setState(
-          { albumData },
+          { ...trackIdArr, albumData },
           this.setState({ loadingAlbum: false }),
         );
       },
     );
   };
 
+  handleChange = ({ target }, songInfo) => {
+    const { name, checked } = target;
+    this.setState(
+      {
+        [name]: checked,
+      },
+      () => {
+        if (checked) {
+          this.addFavorite(songInfo);
+        }
+      },
+    );
+  };
+
   render() {
-    const { albumData, loadingAlbum } = this.state;
+    const { albumData, loadingAlbum, loadingFavorite } = this.state;
     const requestHeader = albumData[0];
     const albumHeader = (
       <div>
@@ -48,17 +68,21 @@ class Album extends Component {
         <h4 data-testid="album-name">{ requestHeader.collectionName }</h4>
       </div>
     );
-    const slicedAlbumData = albumData.slice(1);
+    const sliced = albumData.slice(1);
+    const { state } = this;
 
     return (
       <div data-testid="page-album">
         <Header />
-        { loadingAlbum ? <Loading /> : albumHeader}
-        {loadingAlbum ? <Loading /> : slicedAlbumData.map((e) => (
+        { (loadingAlbum) ? <Loading /> : albumHeader}
+        { (loadingAlbum || loadingFavorite) ? <Loading /> : sliced.map((e, index) => (
           <MusicCard
             key={ e.trackId }
             songInfo={ e }
             handleChange={ this.handleChange }
+            addFavorite={ this.addFavorite }
+            index={ index }
+            checked={ state[index] }
           />))}
       </div>
     );
