@@ -15,6 +15,14 @@ class Album extends Component {
     this.fetchMusic();
   }
 
+  handleChange({ target }) {
+    const { name } = target;
+    const value = target.type === 'checkbox' ? target.checked : target.value;
+    this.setState({
+      [name]: value,
+    });
+  }
+
   fetchMusic = async () => {
     const { match } = this.props;
     const { params } = match;
@@ -50,6 +58,7 @@ class Album extends Component {
           <MusicCard
             key={ e.trackId }
             songInfo={ e }
+            handleChange={ this.handleChange }
           />))}
       </div>
     );
