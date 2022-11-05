@@ -4,7 +4,7 @@ import Header from '../components/Header';
 import Loading from '../components/Loading';
 import MusicCard from '../components/MusicCard';
 import getMusics from '../services/musicsAPI';
-import { addSong, getFavoriteSongs } from '../services/favoriteSongsAPI';
+import { addSong, getFavoriteSongs, removeSong } from '../services/favoriteSongsAPI';
 
 class Album extends Component {
   state = {
@@ -24,6 +24,16 @@ class Album extends Component {
       { loadingFavorite: true },
       async () => {
         await addSong(songInfo);
+        this.setState({ loadingFavorite: false });
+      },
+    );
+  };
+
+  removeFavorite = async (songInfo) => {
+    this.setState(
+      { loadingFavorite: true },
+      async () => {
+        await removeSong(songInfo);
         this.setState({ loadingFavorite: false });
       },
     );
@@ -80,6 +90,8 @@ class Album extends Component {
       () => {
         if (checked) {
           this.addFavorite(songInfo);
+        } else {
+          this.removeFavorite(songInfo);
         }
       },
     );
