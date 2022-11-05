@@ -4,13 +4,15 @@ import Header from '../components/Header';
 import Loading from '../components/Loading';
 import MusicCard from '../components/MusicCard';
 import getMusics from '../services/musicsAPI';
-import { addSong } from '../services/favoriteSongsAPI';
+import { addSong, getFavoriteSongs } from '../services/favoriteSongsAPI';
 
 class Album extends Component {
   state = {
     loadingAlbum: false,
     albumData: [{ artistName: '' }],
     loadingFavorite: false,
+    loadingFavoriteList: false,
+    favoriteList: [],
   };
 
   componentDidMount() {
@@ -37,12 +39,36 @@ class Album extends Component {
         const albumData = await getMusics(id);
         const slicedAlbumData = albumData.slice(1);
         const trackIdArr = slicedAlbumData.map(() => false);
-        this.setState(
-          { ...trackIdArr, albumData },
-          this.setState({ loadingAlbum: false }),
-        );
+        this.setState({ ...trackIdArr, albumData }, () => {
+          this.fetchFavorites();
+          this.setState({ loadingAlbum: false });
+        });
       },
     );
+  };
+
+  fetchFavorites = async () => {
+    this.setState(
+      { loadingFavoriteList: true },
+      async () => {
+        const favoriteList = await getFavoriteSongs();
+        this.setState({ favoriteList }, () => {
+          this.favoriteChecker();
+          this.setState({ loadingFavoriteList: false });
+        });
+      },
+    );
+  };
+
+  favoriteChecker = () => {
+    const { favoriteList, albumData } = this.state;
+    favoriteList.forEach((fav) => {
+      albumData.forEach((track, index) => {
+        if (fav.trackId === track.trackId) {
+          this.setState({ [index - 1]: true });
+        }
+      });
+    });
   };
 
   handleChange = ({ target }, songInfo) => {
