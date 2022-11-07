@@ -8,7 +8,7 @@ class Profile extends Component {
   state = {
     name: '',
     email: '',
-    imgage: '',
+    image: '',
     description: '',
     loadingUser: false,
   };
